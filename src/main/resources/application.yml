@@ -1,3 +1,63 @@
 spring:
   application:
     name: converter
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    enabled: true
+    schemas:
+      - public
+    callback-locations: classpath:db/migration
+  datasource:
+    url: ${PSQL_URL:jdbc:postgresql://localhost:5432}/${PSQL_CONVERTER_DB:converter_db}
+    username: ${PSQL_CONVERTER_USER:converter_user}
+    password: ${PSQL_CONVERTER_PASS:converter_pass}
+    driver-class-name: org.postgresql.Driver
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: pdf-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      max-poll-records: 2
+      properties:
+        spring.json.trusted.packages: "com.task.converter.application.dto"
+        spring.json.value.default.type: com.task.converter.application.dto.RequestedFileEvent
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        spring.json.use.type.headers: false
+        max.poll.interval.ms: 600000
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      acks: all
+      properties:
+        enable.idempotence: true
+        spring.json.add.type.headers: false
+    listener:
+      ack-mode: record
+      concurrency: 3
+
+app:
+  timeouts:
+    s3:
+      s3-call-timeout: 15
+      s3-call-attempt-timeout: 5
+  pdf:
+    font: "/fonts/DejaVuSans.ttf"
+  files:
+    max-file-size: 100MB
+    max-unpacked-size: 200MB
+    max-archive-entries: 100
+  s3:
+    endpoint: http://localhost:9000
+    access-key: user
+    secret-key: password
+    bucket-name: file-converter-storage
+  kafka:
+    topics:
+      input: file.conversion.requested
+      output: file.conversion.completed
