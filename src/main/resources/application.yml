@@ -15,6 +15,7 @@ spring:
     username: ${PSQL_CONVERTER_USER:converter_user}
     password: ${PSQL_CONVERTER_PASS:converter_pass}
     driver-class-name: org.postgresql.Driver
+
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
@@ -46,6 +47,11 @@ app:
     s3:
       s3-call-timeout: 15
       s3-call-attempt-timeout: 5
+    inbox:
+      lease-seconds: 75 #Суммарное время задержки ретраев в конфиге 75s
+    outbox:
+      lease-seconds: 60
+      max-attempts: 5
   pdf:
     font: "/fonts/DejaVuSans.ttf"
   files:
@@ -61,3 +67,6 @@ app:
     topics:
       input: file.conversion.requested
       output: file.conversion.completed
+
+server:
+  port: 8080

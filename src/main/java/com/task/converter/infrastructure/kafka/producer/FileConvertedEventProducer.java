@@ -21,8 +21,13 @@ public class FileConvertedEventProducer {
 
     public void sendSync(FileConvertedEvent payload) throws Exception {
         String eventId = payload.eventId().toString();
-        kafkaTemplate.send(outputTopic, eventId, payload)
-                .get(5, TimeUnit.SECONDS);
+        try {
+            kafkaTemplate.send(outputTopic, eventId, payload)
+                    .get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new Exception("Interrupted", e.getCause());
+        }
         log.info("Сообщение отправлено: {}", eventId);
     }
 

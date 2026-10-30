@@ -3,7 +3,7 @@ package com.task.converter.infrastructure.converter;
 import com.task.converter.application.exception.ConversionException;
 import com.task.converter.application.service.PdfConverter;
 import com.task.converter.application.service.PdfConverterRegistry;
-import com.task.converter.infrastructure.config.FilesProperties;
+import com.task.converter.infrastructure.config.properties.FilesProperties;
 import com.task.converter.infrastructure.storage.TempFiles;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.io.IOUtils;
