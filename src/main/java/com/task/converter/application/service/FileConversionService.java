@@ -13,10 +13,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import static com.task.converter.application.enums.ConversionStatus.FAILED;
-import static com.task.converter.application.enums.ConversionStatus.PENDING;
-import static com.task.converter.application.exception.ErrorCode.INTERNAL_ERROR;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -25,9 +21,8 @@ public class FileConversionService {
     private final StorageService storageService;
     private final PdfConverterRegistry converterRegistry;
     private final FileTypeDetector detector;
-    private final OutboxService outboxService;
 
-    public void processConversation(RequestedFileEvent event) throws IOException {
+    public String processConversation(RequestedFileEvent event) throws IOException {
         Path resTmpPdf = null;
         Path tmp = Files.createTempFile("convert-", ".tmp");
         try {
@@ -38,16 +33,15 @@ public class FileConversionService {
 
             String mime = detector.detect(tmp);
             resTmpPdf = converterRegistry.get(mime).convert(tmp);
-            storageService.saveFile(resTmpPdf.getFileName().toString(), resTmpPdf);
 
-            outboxService.saveOutbox(event, resTmpPdf.getFileName().toString(), PENDING, null, null);
+            String filename = event.eventId() + ".pdf";
+            storageService.saveFile(filename, resTmpPdf);
+
+            return filename;
 
         } catch (ConversionException e) {
             log.warn("Перехваченная ошибка конвертации: {}", e.getMessage());
-            outboxService.saveOutbox(event, null, FAILED, e.code(), e.getMessage());
-        } catch (Exception e) {
-            log.error("Неперехваченная ошибка обработки файла", e);
-            outboxService.saveOutbox(event, null, FAILED, INTERNAL_ERROR, e.getMessage());
+            throw e;
         } finally {
             deleteQuiet(resTmpPdf);
             deleteQuiet(tmp);

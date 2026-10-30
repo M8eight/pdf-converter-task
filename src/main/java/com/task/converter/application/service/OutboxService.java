@@ -8,6 +8,7 @@ import com.task.converter.infrastructure.persistence.entity.Outbox;
 import com.task.converter.infrastructure.persistence.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,48 +26,84 @@ public class OutboxService {
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public List<Outbox> findPendingEvents(int limit) {
-        return outboxRepository.findPendingForUpdate(limit);
+    @Value("${app.s3.bucket-name}")
+    String exportBucketName;
+
+    @Value("${app.timeouts.outbox.lease-seconds}")
+    int leaseSeconds;
+
+    @Value("${app.timeouts.outbox.max-attempts}")
+    int maxAttempts;
+
+    @Transactional
+    public List<Outbox> claimBatch(UUID lockedToken, int batchSize) {
+        List<UUID> ids = outboxRepository.findPendingForUpdate(batchSize);
+
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+
+        outboxRepository.setProcessing(ids, lockedToken, leaseSeconds);
+
+        return outboxRepository.findAllById(ids);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void setSuccess(UUID id) {
-        outboxRepository.findById(id).ifPresent(outbox -> {
-            outbox.setStatus(ConversionStatus.SUCCESS);
-            outbox.setPublishedAt(Instant.now());
-        });
+    public void setSuccess(UUID id, UUID lockedToken) {
+        outboxRepository.setSuccess(id, lockedToken);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void setFailed(UUID id) {
-        outboxRepository.findById(id).ifPresent(outbox -> {
-            outbox.setStatus(ConversionStatus.FAILED);
-        });
+    public void retryOrFail(Outbox outbox, String error, UUID lockedToken) {
+        if (outbox.getRetryAttempts() >= maxAttempts) {
+            outboxRepository.setFailed(outbox.getId(), lockedToken, error);
+            return;
+        }
+
+        Instant nextAttemptAt = Instant.now().plusSeconds(
+                Math.min(
+                        (long) maxAttempts * leaseSeconds,
+                        (long) Math.pow(2, outbox.getRetryAttempts()
+                    )
+                )
+        );
+
+        outboxRepository.setPending(
+                outbox.getId(),
+                nextAttemptAt,
+                error,
+                lockedToken
+        );
+
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void saveOutbox(RequestedFileEvent event, String fileId,
-                            ConversionStatus status, ErrorCode errorCode, String errorMessage) {
+    @Transactional
+    public void createOutbox(RequestedFileEvent event, String fileId, ConversionStatus status, ErrorCode errorCode, String errorMessage) {
         UUID newEventId = UUID.randomUUID();
 
         FileConvertedEvent payload = FileConvertedEvent.builder()
                 .eventId(newEventId)
                 .correlationId(event.eventId())
-                .bucket(event.bucket())
+                .bucket(exportBucketName)
                 .objectKey(fileId)
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
                 .build();
 
-        Outbox outbox = Outbox.builder()
-                .id(newEventId)
-                .fileId(fileId)
-                .payload(objectMapper.valueToTree(payload))
-                .status(status)
-                .build();
+        int inserted = outboxRepository.upsert(
+                newEventId,
+                fileId,
+                event.eventId(),
+                objectMapper.valueToTree(payload),
+                status.name()
+        );
 
-        outboxRepository.save(outbox);
+        if (inserted == 0) {
+            log.info(
+                    "Outbox для correlationId={} уже существует, пропускаем",
+                    event.eventId()
+            );
+        }
     }
 
 }
