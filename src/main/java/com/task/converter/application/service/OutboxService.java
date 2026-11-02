@@ -29,10 +29,10 @@ public class OutboxService {
     @Value("${app.s3.bucket-name}")
     String exportBucketName;
 
-    @Value("${app.timeouts.outbox.lease-seconds}")
+    @Value("${app.outbox.lease-seconds}")
     int leaseSeconds;
 
-    @Value("${app.timeouts.outbox.max-attempts}")
+    @Value("${app.outbox.max-attempts}")
     int maxAttempts;
 
     @Transactional
@@ -78,7 +78,7 @@ public class OutboxService {
     }
 
     @Transactional
-    public void createOutbox(RequestedFileEvent event, String fileId, ConversionStatus status, ErrorCode errorCode, String errorMessage) {
+    public void createOutbox(RequestedFileEvent event, String fileId, ErrorCode errorCode, String errorMessage) {
         UUID newEventId = UUID.randomUUID();
 
         FileConvertedEvent payload = FileConvertedEvent.builder()
@@ -95,7 +95,7 @@ public class OutboxService {
                 fileId,
                 event.eventId(),
                 objectMapper.valueToTree(payload),
-                status.name()
+                ConversionStatus.PENDING.name()
         );
 
         if (inserted == 0) {

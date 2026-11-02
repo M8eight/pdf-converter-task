@@ -33,7 +33,7 @@ public interface OutboxRepository extends JpaRepository<Outbox, UUID> {
                 status = 'PENDING' and next_attempt_at <= now()
             )
             or (
-                status = 'PROCESSING' and (locked_until is null or locked_until < now()) 
+                status = 'PROCESSING' and (locked_until is null or locked_until <= now())
             )
             order by next_attempt_at
             limit :limit
@@ -64,7 +64,7 @@ public interface OutboxRepository extends JpaRepository<Outbox, UUID> {
             and status = 'PROCESSING'
             and locked_token = :lockedToken
     """, nativeQuery = true)
-    int setSuccess(@Param("id") UUID id, @Param("lockedToken") UUID lockedToken);
+    void setSuccess(@Param("id") UUID id, @Param("lockedToken") UUID lockedToken);
 
     @Modifying
     @Query(value = """
@@ -79,7 +79,7 @@ public interface OutboxRepository extends JpaRepository<Outbox, UUID> {
             and status = 'PROCESSING'
             and locked_token = :lockedToken
     """, nativeQuery = true)
-    int setPending(@Param("id") UUID id,
+    void setPending(@Param("id") UUID id,
                     @Param("nextAttemptAt") Instant nextAttemptAt,
                     @Param("errorMessage") String errorMessage,
                     @Param("lockedToken") UUID lockedToken);
@@ -97,21 +97,8 @@ public interface OutboxRepository extends JpaRepository<Outbox, UUID> {
             and status = 'PROCESSING'
             and locked_token = :lockedToken
     """, nativeQuery = true)
-    int setFailed(@Param("id") UUID id,
+    void setFailed(@Param("id") UUID id,
                   @Param("lockedToken") UUID lockedToken,
                   @Param("errorMessage") String errorMessage);
-
-//    boolean existsByCorrelationId(UUID correlationId);
-
-//    @Modifying
-//    @Query(value = """
-//        insert into outbox (id, file_id, correlation_id, payload, status, last_error, next_attempt_at)
-//        values (:id, :fileId, :correlationId, :payload, 'PENDING', :lastError, now())
-//    """, nativeQuery = true)
-//    int insertFailureEvent(@Param("id") UUID id,
-//                           @Param("fileId") String fileId,
-//                           @Param("correlationId") UUID correlationId,
-//                           @Param("payload") JsonNode payload,
-//                           @Param("lastError") String lastError);
 
 }

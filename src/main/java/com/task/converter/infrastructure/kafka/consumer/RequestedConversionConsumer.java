@@ -2,11 +2,11 @@ package com.task.converter.infrastructure.kafka.consumer;
 
 import com.task.converter.application.dto.RequestedFileEvent;
 import com.task.converter.application.exception.ConversionException;
+import com.task.converter.application.exception.ErrorCode;
 import com.task.converter.application.exception.EventBusyException;
 import com.task.converter.application.service.ConversionResultService;
 import com.task.converter.application.service.FileConversionService;
 import com.task.converter.application.service.InboxService;
-import com.task.converter.application.service.OutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.UUID;
-
-import static com.task.converter.application.enums.ConversionStatus.FAILED;
-import static com.task.converter.application.enums.ConversionStatus.PENDING;
 
 @Component
 @Slf4j
@@ -35,13 +32,18 @@ public class RequestedConversionConsumer {
             case CLAIMED -> {}
             case BUSY -> throw new EventBusyException(event.eventId().toString());
             case ALREADY_DONE -> { return; }
+            case EXHAUSTED -> {
+                conversionResultService.failAbandoned(event, ErrorCode.INTERNAL_ERROR,
+                        "Превышено число попыток обработки");
+                return;
+            }
         }
 
         try {
             String filename = fileConversionService.processConversation(event);
             conversionResultService.completeSuccessfully(event, filename, lockedToken);
         } catch (ConversionException e) {
-            conversionResultService.completeFailed(event, e.code(), e.getMessage());
+            conversionResultService.completeFailed(event, e.code(), e.getMessage(), lockedToken);
         } catch (Exception e) {
             inboxService.setPending(event.eventId(), lockedToken);
             throw e;
