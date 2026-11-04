@@ -24,7 +24,7 @@ public class FileConvertedEventProducer {
         try {
             kafkaTemplate.send(outputTopic, eventId, payload)
                     .get(5, TimeUnit.SECONDS);
-            log.info("Отправлено в kafka {}", eventId);
+            log.debug("Отправлено в kafka {}", eventId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new Exception("Interrupted", e.getCause());

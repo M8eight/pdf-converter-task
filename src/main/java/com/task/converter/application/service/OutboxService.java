@@ -99,7 +99,7 @@ public class OutboxService {
         );
 
         if (inserted == 0) {
-            log.info(
+            log.warn(
                     "Outbox для correlationId={} уже существует, пропускаем",
                     event.eventId()
             );

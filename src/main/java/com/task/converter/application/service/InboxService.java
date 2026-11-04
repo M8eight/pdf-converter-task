@@ -56,30 +56,29 @@ public class InboxService {
 
     @Transactional
     public void setSuccess(UUID eventId, UUID lockToken) {
-        log.info("SUCCESS");
         int updated = inboxRepository.setSuccessIfProcessing(eventId, lockToken);
         checkIsUpdated(eventId, updated, SUCCESS);
     }
 
     @Transactional
     public void setFailed(UUID eventId, UUID lockToken) {
-        log.info("FAILED");
         int updated = inboxRepository.setFailedIfNotTerminal(eventId, lockToken);
         checkIsUpdated(eventId, updated, ConversionStatus.FAILED);
     }
 
     @Transactional
     public boolean setFailedIfAbandoned(UUID eventId) {
-        log.info("FAILED ABANDON");
         int updated = inboxRepository.setFailedIfAbandoned(eventId);
-        checkIsUpdated(eventId, updated, ConversionStatus.FAILED);
+        if (updated == 0) {
+            log.warn("Не удалось установить FAILED для eventId={}", eventId);
+            return false;
+        }
 
-        return updated == 1;
+        return true;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void setPending(UUID eventId, UUID lockedToken) {
-        log.info("PENDING");
         int updated = inboxRepository.setPendingIfProcessing(eventId, lockedToken);
         checkIsUpdated(eventId, updated, ConversionStatus.PENDING);
     }
