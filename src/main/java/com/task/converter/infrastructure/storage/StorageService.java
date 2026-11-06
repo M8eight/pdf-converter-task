@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 import java.nio.file.Path;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,21 +24,29 @@ public class StorageService {
     @Value("${app.files.max-file-size}")
     private DataSize maxFileSize;
 
-    public void saveFile(String fileKey, Path path) {
+    @Value("${app.s3.folders.incoming}")
+    private String incomingFolder;
+
+    @Value("${app.s3.folders.converted}")
+    private String convertedFolder;
+
+    public void saveFile(UUID fileKey, Path path) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .key(fileKey)
+                .key(convertedFolder + fileKey + ".pdf")
                 .build();
 
         s3Client.putObject(putObjectRequest,
                 RequestBody.fromFile(path));
     }
 
-    public ResponseInputStream<GetObjectResponse> downloadFile(String bucket, String key) {
+    public ResponseInputStream<GetObjectResponse> downloadFile(String bucket, UUID fileKey) {
+
+        String objectKey = incomingFolder + fileKey;
 
         HeadObjectResponse head = s3Client.headObject(HeadObjectRequest.builder()
                 .bucket(bucket)
-                .key(key)
+                .key(objectKey)
                 .build());
 
         if (head.contentLength() > maxFileSize.toBytes()) {
@@ -46,7 +55,7 @@ public class StorageService {
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucket)
-                .key(key)
+                .key(objectKey)
                 .build();
 
         return s3Client.getObject(getObjectRequest);

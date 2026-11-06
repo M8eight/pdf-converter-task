@@ -11,7 +11,6 @@ create table inbox (
 
 create table outbox (
     id uuid primary key,
-    file_id varchar(255),
     correlation_id uuid not null,
     payload jsonb not null,
     status varchar(10) not null default 'PENDING'

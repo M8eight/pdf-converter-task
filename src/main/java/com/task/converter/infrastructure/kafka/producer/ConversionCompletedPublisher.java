@@ -1,6 +1,6 @@
 package com.task.converter.infrastructure.kafka.producer;
 
-import com.task.converter.application.dto.FileConvertedEvent;
+import com.task.converter.application.dto.FileConversionCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,14 +12,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FileConvertedEventProducer {
+public class ConversionCompletedPublisher {
 
     @Value("${app.kafka.topics.output}")
     private String outputTopic;
 
-    private final KafkaTemplate<String, FileConvertedEvent> kafkaTemplate;
+    private final KafkaTemplate<String, FileConversionCompletedEvent> kafkaTemplate;
 
-    public void sendSync(FileConvertedEvent payload) throws Exception {
+    public void sendSync(FileConversionCompletedEvent payload) throws Exception {
         String eventId = payload.eventId().toString();
         try {
             kafkaTemplate.send(outputTopic, eventId, payload)

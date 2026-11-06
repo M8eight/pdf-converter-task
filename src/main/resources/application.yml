@@ -5,6 +5,9 @@ spring:
     hibernate:
       ddl-auto: validate
     show-sql: false
+    properties:
+      type:
+        json_format_mapper: org.hibernate.type.format.jackson.JacksonJsonFormatMapper
   flyway:
     enabled: true
     schemas:
@@ -27,7 +30,7 @@ spring:
       max-poll-records: 2
       properties:
         spring.json.trusted.packages: "com.task.converter.application.dto"
-        spring.json.value.default.type: com.task.converter.application.dto.RequestedFileEvent
+        spring.json.value.default.type: com.task.converter.application.dto.FileConversionRequestedEvent
         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
         spring.json.use.type.headers: false
         max.poll.interval.ms: 600000
@@ -75,6 +78,9 @@ app:
     access-key: user
     secret-key: password
     bucket-name: file-converter-storage
+    folders:
+      incoming: "uploads/"
+      converted: "converted/"
   kafka:
     topics:
       input: file.conversion.requested

@@ -28,11 +28,11 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.apache.httpcomponents:httpclient:4.5.14'
+
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-
-	implementation 'org.springframework.boot:spring-boot-starter-json'
 
 	implementation 'software.amazon.awssdk:s3:2.25.20'
 

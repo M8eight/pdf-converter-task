@@ -1,4 +1,4 @@
-package com.task.converter.application.exception;
+package com.task.converter.application.enums;
 
 public enum ErrorCode {
     TOO_MANY_FILES,

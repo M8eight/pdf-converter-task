@@ -1,8 +1,8 @@
 package com.task.converter.infrastructure.kafka.consumer;
 
-import com.task.converter.application.dto.RequestedFileEvent;
+import com.task.converter.application.dto.FileConversionRequestedEvent;
 import com.task.converter.application.exception.ConversionException;
-import com.task.converter.application.exception.ErrorCode;
+import com.task.converter.application.enums.ErrorCode;
 import com.task.converter.application.exception.EventBusyException;
 import com.task.converter.application.service.ConversionResultService;
 import com.task.converter.application.service.FileConversionService;
@@ -18,14 +18,14 @@ import java.util.UUID;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class RequestedConversionConsumer {
+public class ConversionRequestedConsumer {
 
     private final FileConversionService fileConversionService;
     private final InboxService inboxService;
     private final ConversionResultService conversionResultService;
 
     @KafkaListener(topics = "${app.kafka.topics.input}", groupId = "pdf-service")
-    public void listen(RequestedFileEvent event) throws IOException {
+    public void listen(FileConversionRequestedEvent event) throws IOException {
 
         UUID lockedToken = UUID.randomUUID();
         switch (inboxService.claim(event.eventId(), lockedToken)) {
@@ -40,8 +40,8 @@ public class RequestedConversionConsumer {
         }
 
         try {
-            String filename = fileConversionService.processConversation(event);
-            conversionResultService.completeSuccessfully(event, filename, lockedToken);
+            UUID fileKey = fileConversionService.processConversation(event);
+            conversionResultService.completeSuccessfully(event, lockedToken);
         } catch (ConversionException e) {
             conversionResultService.completeFailed(event, e.code(), e.getMessage(), lockedToken);
         } catch (Exception e) {

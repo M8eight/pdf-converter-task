@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static com.task.converter.application.exception.ErrorCode.UNSUPPORTED_FILE_TYPE;
+import static com.task.converter.application.enums.ErrorCode.UNSUPPORTED_FILE_TYPE;
 
 @Component
 @RequiredArgsConstructor

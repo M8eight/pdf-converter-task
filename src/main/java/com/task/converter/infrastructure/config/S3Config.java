@@ -12,9 +12,6 @@ import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Configuration;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
-import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 
 import java.net.URI;
 import java.time.Duration;
@@ -33,18 +30,11 @@ public class S3Config {
     @Value("${app.s3.secret-key}")
     private String secretKey;
 
-    @Value("${app.s3.bucket-name}")
-    private String bucketName;
-
     private final S3Properties props;
 
     @Bean
     public S3Client s3Client() {
-        S3Configuration s3Configuration = S3Configuration.builder()
-                .pathStyleAccessEnabled(true)
-                .build();
-
-        S3Client s3client = S3Client.builder()
+        return S3Client.builder()
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create(accessKey, secretKey)
@@ -54,17 +44,10 @@ public class S3Config {
                         .apiCallTimeout(Duration.ofSeconds(props.s3CallTimeout()))
                         .apiCallAttemptTimeout(Duration.ofSeconds(props.s3CallAttemptTimeout()))
                         .build())
-                .serviceConfiguration(s3Configuration)
+                .serviceConfiguration(S3Configuration.builder()
+                        .pathStyleAccessEnabled(true)
+                        .build())
                 .build();
-
-        try {
-            s3client.headBucket(HeadBucketRequest.builder().bucket(bucketName).build());
-        } catch (NoSuchBucketException e) {
-            s3client.createBucket(CreateBucketRequest.builder().bucket(bucketName).build());
-            log.info("Бакет {} успешно создан", bucketName);
-        }
-
-        return s3client;
     }
 
 }

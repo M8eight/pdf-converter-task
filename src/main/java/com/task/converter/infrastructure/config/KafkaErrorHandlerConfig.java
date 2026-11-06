@@ -1,6 +1,6 @@
 package com.task.converter.infrastructure.config;
 
-import com.task.converter.application.dto.RequestedFileEvent;
+import com.task.converter.application.dto.FileConversionRequestedEvent;
 import com.task.converter.application.exception.ConversionException;
 import com.task.converter.application.exception.EventBusyException;
 import com.task.converter.application.service.ConversionResultService;
@@ -16,7 +16,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 import org.springframework.util.backoff.FixedBackOff;
 
-import static com.task.converter.application.exception.ErrorCode.INTERNAL_ERROR;
+import static com.task.converter.application.enums.ErrorCode.INTERNAL_ERROR;
 
 @Configuration
 @Slf4j
@@ -35,7 +35,7 @@ public class KafkaErrorHandlerConfig {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
             try {
                 if (!(cause instanceof EventBusyException)
-                        && record.value() instanceof RequestedFileEvent event) {
+                        && record.value() instanceof FileConversionRequestedEvent event) {
                     conversionResultService.failAbandoned(event, INTERNAL_ERROR, cause.getMessage());
                 }
                 deadLetterPublishingRecoverer.accept(record, ex);

@@ -1,12 +1,12 @@
 package com.task.converter.infrastructure.persistence.repository;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.task.converter.infrastructure.persistence.entity.Outbox;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
 import java.util.List;
@@ -17,12 +17,11 @@ public interface OutboxRepository extends JpaRepository<Outbox, UUID> {
 
     @Modifying
     @Query(value = """
-        insert into outbox (id, file_id, correlation_id, payload, status)
-        values (:id, :fileId, :correlationId, :payload, :status)
+        insert into outbox (id, correlation_id, payload, status)
+        values (:id, :correlationId, :payload, :status)
         on conflict (correlation_id) do nothing
     """, nativeQuery = true)
     int upsert(@Param("id") UUID id,
-               @Param("fileId") String fileId,
                @Param("correlationId") UUID correlationId,
                @Param("payload") JsonNode payload,
                @Param("status") String status);

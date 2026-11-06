@@ -1,6 +1,6 @@
 package com.task.converter.application.service;
 
-import com.task.converter.application.dto.RequestedFileEvent;
+import com.task.converter.application.dto.FileConversionRequestedEvent;
 import com.task.converter.application.exception.ConversionException;
 import com.task.converter.infrastructure.converter.FileTypeDetector;
 import com.task.converter.infrastructure.storage.StorageService;
@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,22 +23,21 @@ public class FileConversionService {
     private final PdfConverterRegistry converterRegistry;
     private final FileTypeDetector detector;
 
-    public String processConversation(RequestedFileEvent event) throws IOException {
+    public UUID processConversation(FileConversionRequestedEvent event) throws IOException {
         Path resTmpPdf = null;
         Path tmp = Files.createTempFile("convert-", ".tmp");
         try {
 
-            try (var in = storageService.downloadFile(event.bucket(), event.objectKey())) {
+            try (var in = storageService.downloadFile(event.bucket(), event.eventId())) {
                 Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
             }
 
             String mime = detector.detect(tmp);
             resTmpPdf = converterRegistry.get(mime).convert(tmp);
 
-            String filename = event.eventId() + ".pdf";
-            storageService.saveFile(filename, resTmpPdf);
+            storageService.saveFile(event.eventId(), resTmpPdf);
 
-            return filename;
+            return event.eventId();
 
         } catch (ConversionException e) {
             log.warn("Перехваченная ошибка конвертации: {}", e.getMessage());
