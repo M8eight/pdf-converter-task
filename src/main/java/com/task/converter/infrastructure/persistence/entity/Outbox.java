@@ -1,5 +1,6 @@
 package com.task.converter.infrastructure.persistence.entity;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.task.converter.application.enums.ConversionStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,7 +8,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
 import java.util.UUID;

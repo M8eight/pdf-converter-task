@@ -1,7 +1,8 @@
 package com.task.converter.application.service;
 
-import com.task.converter.application.dto.FileConvertedEvent;
-import com.task.converter.application.dto.RequestedFileEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.task.converter.application.dto.FileConversionCompletedEvent;
+import com.task.converter.application.dto.FileConversionRequestedEvent;
 import com.task.converter.application.enums.ConversionStatus;
 import com.task.converter.application.exception.ErrorCode;
 import com.task.converter.infrastructure.persistence.entity.Outbox;
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 import java.util.List;
@@ -78,10 +78,10 @@ public class OutboxService {
     }
 
     @Transactional
-    public void createOutbox(RequestedFileEvent event, String fileId, ErrorCode errorCode, String errorMessage) {
+    public void createOutbox(FileConversionRequestedEvent event, String fileId, ErrorCode errorCode, String errorMessage) {
         UUID newEventId = UUID.randomUUID();
 
-        FileConvertedEvent payload = FileConvertedEvent.builder()
+        FileConversionCompletedEvent payload = FileConversionCompletedEvent.builder()
                 .eventId(newEventId)
                 .correlationId(event.eventId())
                 .bucket(exportBucketName)

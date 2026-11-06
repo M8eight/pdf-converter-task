@@ -1,6 +1,6 @@
 package com.task.converter.application.service;
 
-import com.task.converter.application.dto.RequestedFileEvent;
+import com.task.converter.application.dto.FileConversionRequestedEvent;
 import com.task.converter.application.exception.ConversionException;
 import com.task.converter.infrastructure.converter.FileTypeDetector;
 import com.task.converter.infrastructure.storage.StorageService;
@@ -22,7 +22,7 @@ public class FileConversionService {
     private final PdfConverterRegistry converterRegistry;
     private final FileTypeDetector detector;
 
-    public String processConversation(RequestedFileEvent event) throws IOException {
+    public String processConversation(FileConversionRequestedEvent event) throws IOException {
         Path resTmpPdf = null;
         Path tmp = Files.createTempFile("convert-", ".tmp");
         try {

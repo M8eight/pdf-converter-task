@@ -1,6 +1,6 @@
 package com.task.converter.infrastructure.kafka.consumer;
 
-import com.task.converter.application.dto.RequestedFileEvent;
+import com.task.converter.application.dto.FileConversionRequestedEvent;
 import com.task.converter.application.exception.ConversionException;
 import com.task.converter.application.exception.ErrorCode;
 import com.task.converter.application.exception.EventBusyException;
@@ -18,14 +18,14 @@ import java.util.UUID;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class RequestedConversionConsumer {
+public class ConversionRequestedConsumer {
 
     private final FileConversionService fileConversionService;
     private final InboxService inboxService;
     private final ConversionResultService conversionResultService;
 
     @KafkaListener(topics = "${app.kafka.topics.input}", groupId = "pdf-service")
-    public void listen(RequestedFileEvent event) throws IOException {
+    public void listen(FileConversionRequestedEvent event) throws IOException {
 
         UUID lockedToken = UUID.randomUUID();
         switch (inboxService.claim(event.eventId(), lockedToken)) {

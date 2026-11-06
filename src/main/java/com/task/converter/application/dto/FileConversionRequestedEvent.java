@@ -5,7 +5,7 @@ import lombok.Builder;
 import java.util.UUID;
 
 @Builder
-public record RequestedFileEvent(
+public record FileConversionRequestedEvent(
         UUID eventId,
         String bucket,
         String objectKey
