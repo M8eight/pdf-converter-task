@@ -10,6 +10,7 @@ public record FileConversionCompletedEvent(
         UUID eventId,
         UUID correlationId,
         String bucket,
+        String objectKey,
         ErrorCode errorCode,
         String errorMessage
 ) {

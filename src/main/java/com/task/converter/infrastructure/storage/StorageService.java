@@ -24,25 +24,20 @@ public class StorageService {
     @Value("${app.files.max-file-size}")
     private DataSize maxFileSize;
 
-    @Value("${app.s3.folders.incoming}")
-    private String incomingFolder;
-
     @Value("${app.s3.folders.converted}")
     private String convertedFolder;
 
     public void saveFile(UUID fileKey, Path path) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
-                .key(convertedFolder + fileKey + ".pdf")
+                .key(createObjectKey(fileKey))
                 .build();
 
         s3Client.putObject(putObjectRequest,
                 RequestBody.fromFile(path));
     }
 
-    public ResponseInputStream<GetObjectResponse> downloadFile(String bucket, UUID fileKey) {
-
-        String objectKey = incomingFolder + fileKey;
+    public ResponseInputStream<GetObjectResponse> downloadFile(String bucket, String objectKey) {
 
         HeadObjectResponse head = s3Client.headObject(HeadObjectRequest.builder()
                 .bucket(bucket)
@@ -61,5 +56,8 @@ public class StorageService {
         return s3Client.getObject(getObjectRequest);
     }
 
+    public String createObjectKey(UUID fileKey) {
+        return convertedFolder + fileKey + ".pdf";
+    }
 
 }

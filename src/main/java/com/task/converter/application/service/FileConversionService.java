@@ -23,12 +23,12 @@ public class FileConversionService {
     private final PdfConverterRegistry converterRegistry;
     private final FileTypeDetector detector;
 
-    public UUID processConversation(FileConversionRequestedEvent event) throws IOException {
+    public void processConversation(FileConversionRequestedEvent event) throws IOException {
         Path resTmpPdf = null;
         Path tmp = Files.createTempFile("convert-", ".tmp");
         try {
 
-            try (var in = storageService.downloadFile(event.bucket(), event.eventId())) {
+            try (var in = storageService.downloadFile(event.bucket(), event.objectKey())) {
                 Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
             }
 
@@ -36,8 +36,6 @@ public class FileConversionService {
             resTmpPdf = converterRegistry.get(mime).convert(tmp);
 
             storageService.saveFile(event.eventId(), resTmpPdf);
-
-            return event.eventId();
 
         } catch (ConversionException e) {
             log.warn("Перехваченная ошибка конвертации: {}", e.getMessage());

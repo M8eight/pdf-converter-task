@@ -79,7 +79,6 @@ app:
     secret-key: password
     bucket-name: file-converter-storage
     folders:
-      incoming: "uploads/"
       converted: "converted/"
   kafka:
     topics:

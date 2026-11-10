@@ -40,7 +40,7 @@ public class ConversionRequestedConsumer {
         }
 
         try {
-            UUID fileKey = fileConversionService.processConversation(event);
+            fileConversionService.processConversation(event);
             conversionResultService.completeSuccessfully(event, lockedToken);
         } catch (ConversionException e) {
             conversionResultService.completeFailed(event, e.code(), e.getMessage(), lockedToken);

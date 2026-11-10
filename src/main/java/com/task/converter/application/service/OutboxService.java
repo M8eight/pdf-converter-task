@@ -7,6 +7,7 @@ import com.task.converter.application.enums.ConversionStatus;
 import com.task.converter.application.enums.ErrorCode;
 import com.task.converter.infrastructure.persistence.entity.Outbox;
 import com.task.converter.infrastructure.persistence.repository.OutboxRepository;
+import com.task.converter.infrastructure.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ public class OutboxService {
 
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
+    private final StorageService storageService;
 
     @Value("${app.s3.bucket-name}")
     String exportBucketName;
@@ -85,6 +87,7 @@ public class OutboxService {
                 .eventId(newEventId)
                 .correlationId(event.eventId())
                 .bucket(exportBucketName)
+                .objectKey(storageService.createObjectKey(event.eventId()))
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
                 .build();
